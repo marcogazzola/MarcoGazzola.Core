@@ -1,18 +1,17 @@
-﻿using MongoDB.Driver;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace MarcoGazzola.MongoDB.Interfaces
+namespace MarcoGazzola.Base.Interfaces
 {
     public interface IBaseRepository<T> where T : IEntity
     {
         T CreateInstance();
         Task<IEnumerable<T>> GetAll();
         Task<T> GetByID(string id);
-        Task Add(T item);
-        Task<DeleteResult> Remove(T item);
+        Task<IInsertOperationResult> Add(T item);
+        Task<IOperationResult> Remove(T item);
         Task RemoveAll();
-        Task<ReplaceOneResult> Update(T item);
+        Task<IOperationResult> Update(T item);
         string CollectionName { get; }
     }
 }

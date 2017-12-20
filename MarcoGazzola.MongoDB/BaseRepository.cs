@@ -1,4 +1,6 @@
-﻿using MarcoGazzola.MongoDB.Interfaces;
+﻿using MarcoGazzola.Base;
+using MarcoGazzola.Base.Interfaces;
+using MarcoGazzola.MongoDB.Interfaces;
 using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
@@ -20,11 +22,19 @@ namespace MarcoGazzola.MongoDB
 
         public string CollectionName { get; }
 
-        public async Task Add(T item)
+        public async Task<IInsertOperationResult> Add(T item)
         {
-            item.CreatedOn = DateTime.Now;
-            item.Id = null;
-            await this.CollectionItems.InsertOneAsync(item);
+            try
+            {
+                item.CreatedOn = DateTime.Now;
+                item.Id = null;
+                await this.CollectionItems.InsertOneAsync(item);
+                return new InsertOperationResult(item.Id, true);
+            }
+            catch (Exception ex)
+            {
+                return await new Task<IInsertOperationResult>(() => (IInsertOperationResult)ex.MongoException());
+            }
         }
 
         public T CreateInstance()
@@ -42,20 +52,34 @@ namespace MarcoGazzola.MongoDB
             return await this.CollectionItems.Find(item => item.Id == id).FirstOrDefaultAsync<T>();
         }
 
-        public async Task<DeleteResult> Remove(T item)
+        public async Task<IOperationResult> Remove(T item)
         {
-            return await this.CollectionItems.DeleteOneAsync(Builders<T>.Filter.Eq("Id", item.Id));
+            try
+            {
+                return (await this.CollectionItems.DeleteOneAsync(Builders<T>.Filter.Eq("Id", item.Id))).ToOperationResult();
+            }
+            catch (Exception ex)
+            {
+                return await new Task<IOperationResult>(() => ex.MongoException());
+            }
         }
 
         public async Task RemoveAll()
         {
             await this.dbContext.database.DropCollectionAsync(this.CollectionName);
         }
-        public async Task<ReplaceOneResult> Update(T item)
+        public async Task<IOperationResult> Update(T item)
         {
-            var filter = Builders<T>.Filter.Eq(s => s.Id, item.Id);
-            item.UpdatedOn = DateTime.Now;
-            return await this.CollectionItems.ReplaceOneAsync(filter, item);
+            try
+            {
+                var filter = Builders<T>.Filter.Eq(s => s.Id, item.Id);
+                item.UpdatedOn = DateTime.Now;
+                return (await this.CollectionItems.ReplaceOneAsync(filter, item)).ToOperationResult(); ;
+            }
+            catch (Exception ex)
+            {
+                return await new Task<IOperationResult>(() => ex.MongoException());
+            }
         }
     }
 }

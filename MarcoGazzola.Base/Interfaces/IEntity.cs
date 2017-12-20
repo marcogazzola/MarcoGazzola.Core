@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MarcoGazzola.MongoDB.Interfaces
+namespace MarcoGazzola.Base.Interfaces
 {
     public interface IEntity
     {
